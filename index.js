@@ -4,35 +4,35 @@ const c = canvas.getContext('2d')
 canvas.width = 1024
 canvas.height = 576
 
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
 c.fillRect(0, 0, canvas.width, canvas.height)
 
 const gravity = 0.25
-
-const background = new Sprite
-({
-    position: 
-    {
-        x: 0,
-        y: 0
-    },
-    imageSrc: './img/background.png'
-})
-
-const shop = new Sprite
-({
-    position: 
-    {
-        x: 640,
-        y: 160
-    },
-    imageSrc: './img/shop.png',
-    scale: 2.5,
-    framesMax: 6
-})
+// const background = new Sprite
+// ({
+//     position: 
+//     {
+//         x: 0,
+//         y: 0
+//     },
+//     imageSrc: './img/background.png'
+// })
 
 const player = new Fighter
 ({
     position: 
+    {
+        x: 200,
+        y: 100
+    },
+    startPosition: 
     {
         x: 200,
         y: 100
@@ -93,22 +93,31 @@ const player = new Fighter
             framesMax: 6
         }
     },
-        attackBox:
+    attackBox:
+    {
+        offset:
         {
-            offset:
-            {
-                x: 85,
-                y: 50
-            },
-            width: 160,
-            height: 50
+            x: 75,
+            y: 30
         },
-        direction: 1
+        width: 140,
+        height: 100
+    },
+    maxJumps: 1,
+    jumpVelocity: -14,
+    runVelocity: 3,
+    damage: 21,
+    framesHold: 14,
 })
 
 const enemy = new Fighter
 ({
     position: 
+    {
+        x: canvas.width - 250,
+        y: 100
+    },
+    startPosition: 
     {
         x: canvas.width - 250,
         y: 100
@@ -169,20 +178,22 @@ const enemy = new Fighter
             framesMax: 7
         }
     },
-        attackBox:
+    attackBox:
+    {
+        offset:
         {
-            offset:
-            {
-                x: -175,
-                y: 50
-            },
-            width: 160,
-            height: 50
+            x: -175,
+            y: 50
         },
-        direction: 1
+        width: 160,
+        height: 50
+    },
+    maxJumps: 2,
+    jumpVelocity: -11,
+    runVelocity: 4.5,
+    damage: 10,
+    framesHold: 12,
 })
-
-console.log(player)
 
 const keys = 
 {
@@ -204,15 +215,33 @@ const keys =
     }
 }
 
-decreaseTimer()
+bg = new Image();
+bg.src = './img/background.png';
+
+startRound();
 
 function animate() 
 {
     window.requestAnimationFrame(animate)
-    c.fillStyle = 'black'
-    c.fillRect(0, 0, canvas.width, canvas.height)
-    background.update()
-    shop.update()
+    
+    const ground = (canvas.height * 0.15) <= 100 ? 100 : (canvas.height * 0.15);
+
+    // Gradients
+    const gradientSky = c.createLinearGradient(0, 0, 0, canvas.height);
+    gradientSky.addColorStop(0, '#457abb');
+    gradientSky.addColorStop(1, '#97bcea');
+    const gradientGround = c.createLinearGradient(0, 0, canvas.width, ground);
+    gradientGround.addColorStop(0, '#3b1c0b');
+    gradientGround.addColorStop(1, '#704129');
+
+    // Sky
+    c.fillStyle = gradientSky;
+    c.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Ground
+    c.fillStyle = gradientGround;
+    c.fillRect(0, canvas.height - ground, canvas.width, ground);
+
     c.fillStyle = 'rgba(255, 255, 255, 0.2)'
     c.fillRect(0, 0, canvas.width, canvas.height)
     player.update()
@@ -222,22 +251,16 @@ function animate()
     enemy.velocity.x = 0
 
     //player movement
-    if
-    (
-        keys.d.pressed && player.lastKey === 'd'
-    ) 
-        {
-            player.velocity.x = 3
-            player.switchSprite('run')
-        } 
-    else if
-    (
-        keys.a.pressed && player.lastKey === 'a'
-    )
-        {
-            player.velocity.x = -3
-            player.switchSprite('run')
-        }
+    if(keys.d.pressed && player.lastKey === 'd') 
+    {
+        player.velocity.x = player.runVelocity
+        player.switchSprite('run')
+    } 
+    else if(keys.a.pressed && player.lastKey === 'a')
+    {
+        player.velocity.x = player.runVelocity * -1
+        player.switchSprite('run')
+    }
     else
     {
         player.switchSprite('idle')
@@ -254,26 +277,20 @@ function animate()
     }
 
     //enemy movement
-    if
-    (
-        keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight'
-    ) 
-        {
-            enemy.velocity.x = 3
-            enemy.switchSprite('run')
-        } 
-    else if
-    (
-        keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft'
-    )
-        {
-            enemy.velocity.x = -3
-            enemy.switchSprite('run')
-        }
+    if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') 
+    {
+        enemy.velocity.x = enemy.runVelocity
+        enemy.switchSprite('run')
+    } 
+    else if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft')
+    {
+        enemy.velocity.x = enemy.runVelocity * -1
+        enemy.switchSprite('run')
+    }
     else
-        {
-            enemy.switchSprite('idle')
-        }
+    {
+        enemy.switchSprite('idle')
+    }
 
     // jumping
     if (enemy.velocity.y < 0)
@@ -285,71 +302,66 @@ function animate()
         enemy.switchSprite('fall')
     }
 
-    // detect for collision & enemy gets hit
-    if
-    (
-        rectangularCollision
-        ({
-            rectangle1: player,
-            rectangle2: enemy
-        }) &&
-            player.isAttacking &&
-            player.framesCurrent === 4
-    )
+    // Ive hit
+    if(
+        rectangularCollision({ rectangle1: player, rectangle2: enemy}) 
+        && player.isAttacking === true
+        && player.framesCurrent === 4
+        && player.animation == 'attack1'
+        && player.hasHit == false
+    ){
+        enemy.takeHit(player.damage);
+        player.hasHit = true;
+
+        gsap.to('#enemyHealth',
         {
-            enemy.takeHit()
-            player.isAttacking = false
-
-            gsap.to('#enemyHealth',
-            {
-                width: enemy.health + '%'
-            })
-        }
-
-    // if player misses
-    if (player.isAttacking && player.framesCurrent === 4)
+            width: enemy.health + '%'
+        });
+    }
+    // Ive missed
+    else if(player.framesCurrent === 4 && player.isAttacking === true && player.hasHit === false)
     {
-        player.isAttacking = false
+        player.isAttacking = false;
+        player.hasHit = false;
+    }
+
+    // The animation is over
+    if(player.framesCurrent === player.framesMax - 1)
+    {
+        player.isAttacking = false;
+        player.hasHit = false;
     }
 
     //detect for collision & player gets hit
-    if
-    (
-        rectangularCollision
-        ({
-            rectangle1: enemy,
-            rectangle2: player
-        }) &&
-            enemy.isAttacking &&
-            enemy.framesCurrent === 2
-    )
+    if(
+        rectangularCollision({ rectangle1: enemy, rectangle2: player }) 
+        && enemy.isAttacking
+        && enemy.framesCurrent === 2
+        && enemy.animation == 'attack1'
+        && enemy.hasHit == false
+    ){
+        player.takeHit(enemy.damage);
+        enemy.hasHit = true;
+
+        gsap.to('#playerHealth',
         {
-            player.takeHit()
-            enemy.isAttacking = false
+            width: player.health + '%'
+        });
+    }
+    else if(enemy.framesCurrent === 2 && enemy.isAttacking === true && enemy.hasHit === false)
+    {
+        enemy.isAttacking = false;
+        enemy.hasHit = false;
+    }
 
-            gsap.to('#playerHealth',
-            {
-                width: player.health + '%'
-            })
-        }
-        }
+    if(enemy.framesCurrent === enemy.framesMax - 1)
+    {
+        enemy.isAttacking = false;
+        enemy.hasHit = false;
+    }
+}
 
-     // if enemy misses
-     if (enemy.isAttacking && enemy.framesCurrent === 2)
-     {
-         enemy.isAttacking = false
-     }
-
-    // end game based on health
-    if
-    (
-        enemy.health <= 0 || player.health <= 0
-     ) 
-        {
-        determineWinner({ player, enemy, timerId })
-        }
-
-animate()
+animate();
 
 window.addEventListener('keydown', (event) =>
 {
@@ -372,7 +384,7 @@ window.addEventListener('keydown', (event) =>
             case 'w':
                 if (player.jumps > 0)
                 {
-                    player.velocity.y = -12
+                    player.velocity.y = player.jumpVelocity
                     player.jumps -= 1
                 }
                 break
@@ -400,7 +412,7 @@ window.addEventListener('keydown', (event) =>
                 case 'ArrowUp':
                     if (enemy.jumps > 0)
                     {
-                        enemy.velocity.y = -12
+                        enemy.velocity.y = enemy.jumpVelocity
                         enemy.jumps -= 1
                     }
                     break

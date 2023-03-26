@@ -12,59 +12,70 @@ function rectangularCollision
     )
 }
 
-function determineWinner
-({
-    player,
-    enemy,
-    timerId
-}) 
+let round = 0;
+let round_length = 90;
+let player_score = 0;
+let enemy_score = 0;
+let timer = 0;
+let timerId;
+
+document.querySelector('#timer').innerHTML = round_length;
+
+function startRound()
 {
-    clearTimeout(timerId)
-    document.querySelector('#displayText').style.display = 'flex'
-    if
-    (
-        player.health === enemy.health
-    )
-        {
-            document.querySelector('#displayText').innerHTML = 'Draw!'
-        } 
-    else if
-    (
-        player.health > enemy.health
-    )
-        {
-            document.querySelector('#displayText').innerHTML = 'Player 1 Wins!'
-        }
-    else if
-    (
-        player.health < enemy.health
-    )
-        {
-            document.querySelector('#displayText').innerHTML = 'Player 2 Wins!'
-        } 
+    round++;
+    document.querySelector('#roundNumber').innerHTML = "ROUND "+round;
+
+    player.restore();
+    gsap.to('#playerHealth',
+    {
+        width: player.health + '%'
+    });
+
+    enemy.restore();
+    gsap.to('#enemyHealth',
+    {
+        width: enemy.health + '%'
+    });
+
+    timer = round_length - 1;
+    timerId = setInterval(() => {
+        if(timer <= 0)
+            determineWinner();
+        document.querySelector('#timer').innerHTML = timer;
+        timer--;
+    }, 1000);
+
+    document.querySelector('#displayText').style.display = 'flex';
+    document.querySelector('#displayText').innerHTML = 'Fight!';
+
+    setTimeout(() => {
+        document.querySelector('#displayText').style.display = 'none';
+    }, 2000);
 }
 
-let timer = 45
-let timerId
-function decreaseTimer()
+function determineWinner() 
 {
-    if
-    (
-        timer > 0
-    ) 
-        {
-            timerId = setTimeout(decreaseTimer, 1000)
-            timer--
-            document.querySelector('#timer').innerHTML = timer
-        }
+    clearTimeout(timerId);
 
-    if (timer === 0)
+    document.querySelector('#displayText').style.display = 'flex';
+
+    const retryButton = '<a onClick="startRound()" style="text-decoration: underline; font-size: 30px; margin-top: 40px;">NEXT ROUND</a>';
+
+    if(player.health === enemy.health)
     {
-        determineWinner
-        ({
-            player,
-            enemy,
-            timerId
-        })
+        document.querySelector('#displayText').innerHTML = '<span style="font-size: 40px">Draw!</span>' + retryButton;
+    } 
+    else if(player.health > enemy.health)
+    {
+        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Player 1 Wins!</span>' + retryButton;
+        player_score++;
+        document.querySelector('#playerScore').innerHTML = player_score;
     }
+    else if(player.health < enemy.health)
+    {
+        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Player 2 Wins!</span>' + retryButton;
+        enemy_score++;
+        document.querySelector('#enemyScore').innerHTML = enemy_score;
+    } 
 }

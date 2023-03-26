@@ -24,29 +24,21 @@ class Sprite
         this.framesElapsed = 0
         this.framesHold = 15
         this.offset = offset
-        this.direction = 1
    } 
 
     draw()
    {
-    if (this.direction === -1)
-    {
-        c.translate(this.position.x - this.offset.x + this.image.width, this.position.y - this.offset.y)
-        c.scale(-1, 1)
-    }
-        c.drawImage
-            (
-                this.image,
-                this.framesCurrent * (this.image.width / this.framesMax),
-                0,
-                this.image.width / this.framesMax,
-                this.image.height, 
-                this.position.x - this.offset.x,
-                this.position.y - this.offset.y,
-                (this.image.width / this.framesMax) * this.scale,
-                this.image.height * this.scale
-            )
-        c.setTransform(1, 0, 0, 1, 0, 0)
+        c.drawImage(
+            this.image,
+            this.framesCurrent * (this.image.width / this.framesMax),
+            0,
+            this.image.width / this.framesMax,
+            this.image.height, 
+            this.position.x - this.offset.x,
+            this.position.y - this.offset.y,
+            (this.image.width / this.framesMax) * this.scale,
+            this.image.height * this.scale
+        )
    }
 
    animateFrames()
@@ -76,6 +68,7 @@ class Fighter extends Sprite
    constructor
    ({ 
         position,
+        startPosition,
         velocity,
         colour = 'blue',
         imageSrc,
@@ -93,17 +86,26 @@ class Fighter extends Sprite
             width: undefined,
             height: undefined
         },
-        direction,
+        maxJumps = 1,
+        jumpVelocity = 12,
+        runVelocity = 3,
+        damage = 20,
+        framesHold = 15,
     })
    {
         super
         ({
             position,
+            startPosition,
             imageSrc,
             scale,
             framesMax,
             offset,
-            direction,
+            maxJumps,
+            jumpVelocity,
+            runVelocity,
+            damage,
+            framesHold,
         })
 
         this.velocity = velocity
@@ -122,15 +124,22 @@ class Fighter extends Sprite
             height: attackBox.height
         }
         this.colour = colour
-        this.isAttacking
+        this.isAttacking = false;
+        this.hasHit = false;
         this.health = 100
         this.framesCurrent = 0
         this.framesElapsed = 0
-        this.framesHold = 15
+        this.framesHold = framesHold
         this.sprites = sprites
         this.dead = false
-        this.direction = direction
-        this.jumps = 2
+        this.jumps = maxJumps
+        this.maxJumps = maxJumps
+        this.jumpVelocity = jumpVelocity
+        this.runVelocity = runVelocity
+        this.damage = damage
+        this.animation = 'idle';
+        this.maxHealth = 100;
+        this.startPosition = startPosition;
 
         for (const sprite in this.sprites)
         {
@@ -139,8 +148,20 @@ class Fighter extends Sprite
         }
    } 
 
+    restore()
+    {
+        this.image = this.sprites.idle.image
+        this.framesMax = this.sprites.idle.framesMax
+        this.framesCurrent = 0
+        this.animation = 'idle';
+        this.dead = false;
+        this.health = this.maxHealth;
+        this.position = structuredClone(this.startPosition);
+    }
+
     update() 
    {
+        const ground = (canvas.height * 0.15) <= 100 ? 100 : (canvas.height * 0.15) - 2;
         this.draw()
         if (!this.dead) this.animateFrames()
 
@@ -149,26 +170,38 @@ class Fighter extends Sprite
         this.attackBox.position.y = this.position.y + this.attackBox.offset.y
 
         // draw attack box
-        // c.fillRect
-        // (
-        //     this.attackBox.position.x,
-        //     this.attackBox.position.y,
-        //     this.attackBox.width,
-        //     this.attackBox.height
-        // )
+        c.fillRect
+        (
+            this.attackBox.position.x,
+            this.attackBox.position.y,
+            this.attackBox.width,
+            this.attackBox.height
+        )
 
-        this.position.x += this.velocity.x
+        if(this.position.x + this.velocity.x <= 0)
+        {
+            this.position.x = 0;
+        }
+        else if(this.position.x + this.width + this.velocity.x >= canvas.width)
+        {
+            this.position.x = canvas.width - this.width;
+        }
+        else
+        {
+            this.position.x += this.velocity.x;
+        }
+
         this.position.y += this.velocity.y
 
         // gravity function
         if
         (
-            this.position.y + this.height + this.velocity.y >= canvas.height - 95
+            this.position.y + this.height + this.velocity.y >= canvas.height - ground
         ) 
             {
                 this.velocity.y = 0
-                this.position.y = 331
-                this.jumps = 2
+                this.position.y = canvas.height - ground - this.height;
+                this.jumps = this.maxJumps
             } 
         else 
         {
@@ -177,18 +210,23 @@ class Fighter extends Sprite
    }
 
     attack()
-   {
-        this.switchSprite('attack1')
-        this.isAttacking = true
-   }
+    {
+        if(this.isAttacking)
+            return false;
+        
+        this.hasHit = false;
+        this.isAttacking = true;
+        this.switchSprite('attack1');
+    }
 
-   takeHit()
+   takeHit(damage)
    {
-        this.health -= 20
+        this.health -= damage
 
         if (this.health <= 0)
         {
-            this.switchSprite('death')
+            this.switchSprite('death');
+            determineWinner();
         }
         else
         this.switchSprite('takeHit')
@@ -230,6 +268,7 @@ class Fighter extends Sprite
                     this.image = this.sprites.idle.image
                     this.framesMax = this.sprites.idle.framesMax
                     this.framesCurrent = 0
+                    this.animation = sprite;
                 }
                 break
 
@@ -239,6 +278,7 @@ class Fighter extends Sprite
                     this.image = this.sprites.run.image
                     this.framesMax = this.sprites.run.framesMax
                     this.framesCurrent = 0
+                    this.animation = sprite;
                 }
                 break
 
@@ -248,6 +288,7 @@ class Fighter extends Sprite
                     this.image = this.sprites.jump.image
                     this.framesMax = this.sprites.jump.framesMax
                     this.framesCurrent = 0
+                    this.animation = sprite;
                 }
                 break
 
@@ -257,6 +298,7 @@ class Fighter extends Sprite
                     this.image = this.sprites.fall.image
                     this.framesMax = this.sprites.fall.framesMax
                     this.framesCurrent = 0
+                    this.animation = sprite;
                 }
                 break
 
@@ -266,6 +308,7 @@ class Fighter extends Sprite
                     this.image = this.sprites.attack1.image
                     this.framesMax = this.sprites.attack1.framesMax
                     this.framesCurrent = 0
+                    this.animation = sprite;
                 }
                 break
 
@@ -275,6 +318,7 @@ class Fighter extends Sprite
                     this.image = this.sprites.takeHit.image
                     this.framesMax = this.sprites.takeHit.framesMax
                     this.framesCurrent = 0
+                    this.animation = sprite;
                 }
                 break
 
@@ -284,6 +328,7 @@ class Fighter extends Sprite
                     this.image = this.sprites.death.image
                     this.framesMax = this.sprites.death.framesMax
                     this.framesCurrent = 0
+                    this.animation = sprite;
                 }
                 break
         }
