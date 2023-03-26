@@ -91,6 +91,8 @@ class Fighter extends Sprite
         runVelocity = 3,
         damage = 20,
         framesHold = 15,
+        ai = false,
+        direction = 1,
     })
    {
         super
@@ -106,6 +108,8 @@ class Fighter extends Sprite
             runVelocity,
             damage,
             framesHold,
+            ai,
+            direction
         })
 
         this.velocity = velocity
@@ -140,6 +144,10 @@ class Fighter extends Sprite
         this.animation = 'idle';
         this.maxHealth = 100;
         this.startPosition = startPosition;
+        this.ai = ai;
+        this.direction = direction;
+        this.dying = false;
+        this.lastPunched = 0;
 
         for (const sprite in this.sprites)
         {
@@ -154,29 +162,37 @@ class Fighter extends Sprite
         this.framesMax = this.sprites.idle.framesMax
         this.framesCurrent = 0
         this.animation = 'idle';
+        this.dying = false;
         this.dead = false;
         this.health = this.maxHealth;
+        this.jumps = this.maxJumps;
+        this.switchSprite('idle');
         this.position = structuredClone(this.startPosition);
     }
 
     update() 
    {
         const ground = (canvas.height * 0.15) <= 100 ? 100 : (canvas.height * 0.15) - 2;
-        this.draw()
-        if (!this.dead) this.animateFrames()
+
+        this.draw();
+        if (!this.dead) 
+            this.animateFrames();
 
         // attack boxes
         this.attackBox.position.x = this.position.x + this.attackBox.offset.x
         this.attackBox.position.y = this.position.y + this.attackBox.offset.y
 
         // draw attack box
-        c.fillRect
-        (
-            this.attackBox.position.x,
-            this.attackBox.position.y,
-            this.attackBox.width,
-            this.attackBox.height
-        )
+        // c.fillRect
+        // (
+        //     this.attackBox.position.x,
+        //     this.attackBox.position.y,
+        //     this.attackBox.width,
+        //     this.attackBox.height
+        // )
+
+        if(paused === true)
+            return;
 
         if(this.position.x + this.velocity.x <= 0)
         {
@@ -221,15 +237,18 @@ class Fighter extends Sprite
 
    takeHit(damage)
    {
-        this.health -= damage
+        this.lastPunched = Date.now();
+        this.health -= damage;
 
         if (this.health <= 0)
         {
+            this.velocity.x = 0;
+            this.dying = true;
             this.switchSprite('death');
             determineWinner();
         }
         else
-        this.switchSprite('takeHit')
+            this.switchSprite('takeHit')
    }
 
    switchSprite(sprite)
@@ -240,8 +259,11 @@ class Fighter extends Sprite
             this.image === this.sprites.death.image
         )
         {
-            if (this.framesCurrent === this.sprites.death.framesMax - 1) this.dead = true
-        return
+            if (this.framesCurrent === this.sprites.death.framesMax - 1) 
+            {
+                this.dead = true;
+            }
+            return;
         }
 
         // overriding all other animations with the attack animation

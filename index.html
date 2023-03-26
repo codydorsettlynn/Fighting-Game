@@ -105,12 +105,22 @@
             right: 0;
             bottom: 0;
             left: 0;
-            display: none;
+            display: flex;
             text-shadow: 3px 3px #000, 0px 0px 20px #ab3bc2;
             font-size: 50px;
             flex-direction: column;
         ">
-            Draw!
+            <div style="flex-direction: row; display: flex; justify-content: space-between; width: 80%;">
+                <div>
+                    <p>Samurai</p>
+                    <a id="playerToggle" onClick="toggleAi(player, enemy)" style="text-decoration: underline; font-size: 30px; float: left; margin-top: 30px;">HUMAN</a>
+                </div>
+                <a onClick="startGame()" style="text-decoration: underline; font-size: 30px;">START GAME</a>
+                <div>
+                    <p>Kenji</p>
+                    <a id="enemyToggle" onClick="toggleAi(enemy, player)" style="text-decoration: underline; font-size: 30px; float: right; margin-top: 30px;">HUMAN</a>
+                </div>
+            </div>
         </div>
         <canvas></canvas>
     </div>
@@ -120,5 +130,6 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="js/utils.js"></script>
     <script src="js/classes.js"></script>
+    <script src="js/ai.js"></script>
     <script src="index.js"></script>
 </body>

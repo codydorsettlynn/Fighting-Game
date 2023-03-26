@@ -13,18 +13,43 @@ function rectangularCollision
 }
 
 let round = 0;
-let round_length = 90;
+let round_length = 60;
 let player_score = 0;
 let enemy_score = 0;
 let timer = 0;
 let timerId;
+let paused = false;
 
 document.querySelector('#timer').innerHTML = round_length;
+
+function toggleAi(self, opponent)
+{
+    if(!self.ai)
+    {
+        self.ai = new ai({
+            self: self,
+            enemy: opponent,
+        });
+    }
+    else
+    {
+        self.ai = false;
+    }
+
+    document.querySelector('#playerToggle').innerHTML = player.ai === false ? 'HUMAN' : 'AI';
+    document.querySelector('#enemyToggle').innerHTML = enemy.ai === false ? 'HUMAN' : 'AI';
+}
+
+function startGame()
+{
+    startRound();
+}
 
 function startRound()
 {
     round++;
     document.querySelector('#roundNumber').innerHTML = "ROUND "+round;
+    paused = true;
 
     player.restore();
     gsap.to('#playerHealth',
@@ -52,6 +77,10 @@ function startRound()
     setTimeout(() => {
         document.querySelector('#displayText').style.display = 'none';
     }, 2000);
+
+    setTimeout(() => {
+        paused = false;
+    }, 500);
 }
 
 function determineWinner() 
@@ -68,13 +97,13 @@ function determineWinner()
     } 
     else if(player.health > enemy.health)
     {
-        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Player 1 Wins!</span>' + retryButton;
+        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Samurai Wins!</span>' + retryButton;
         player_score++;
         document.querySelector('#playerScore').innerHTML = player_score;
     }
     else if(player.health < enemy.health)
     {
-        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Player 2 Wins!</span>' + retryButton;
+        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Kenji Wins!</span>' + retryButton;
         enemy_score++;
         document.querySelector('#enemyScore').innerHTML = enemy_score;
     } 

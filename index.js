@@ -15,27 +15,18 @@ addEventListener("resize", () => {
 c.fillRect(0, 0, canvas.width, canvas.height)
 
 const gravity = 0.25
-// const background = new Sprite
-// ({
-//     position: 
-//     {
-//         x: 0,
-//         y: 0
-//     },
-//     imageSrc: './img/background.png'
-// })
 
 const player = new Fighter
 ({
     position: 
     {
-        x: 200,
-        y: 100
+        x: 150,
+        y: 200
     },
     startPosition: 
     {
-        x: 200,
-        y: 100
+        x: 150,
+        y: 200
     },
     velocity: 
     {
@@ -106,21 +97,23 @@ const player = new Fighter
     maxJumps: 1,
     jumpVelocity: -14,
     runVelocity: 3,
-    damage: 21,
-    framesHold: 14,
+    damage: 15,
+    framesHold: 12,
+    ai: false,
+    direction: 1,
 })
 
 const enemy = new Fighter
 ({
     position: 
     {
-        x: canvas.width - 250,
-        y: 100
+        x: canvas.width - 200,
+        y: 200
     },
     startPosition: 
     {
-        x: canvas.width - 250,
-        y: 100
+        x: canvas.width - 200,
+        y: 200
     },
     velocity: 
     {
@@ -192,7 +185,9 @@ const enemy = new Fighter
     jumpVelocity: -11,
     runVelocity: 4.5,
     damage: 10,
-    framesHold: 12,
+    framesHold: 10,
+    ai: false,
+    direction: -1,
 })
 
 const keys = 
@@ -215,10 +210,7 @@ const keys =
     }
 }
 
-bg = new Image();
-bg.src = './img/background.png';
-
-startRound();
+var ai_frame = 0;
 
 function animate() 
 {
@@ -250,57 +242,79 @@ function animate()
     player.velocity.x = 0
     enemy.velocity.x = 0
 
-    //player movement
-    if(keys.d.pressed && player.lastKey === 'd') 
-    {
-        player.velocity.x = player.runVelocity
-        player.switchSprite('run')
-    } 
-    else if(keys.a.pressed && player.lastKey === 'a')
-    {
-        player.velocity.x = player.runVelocity * -1
-        player.switchSprite('run')
-    }
-    else
-    {
-        player.switchSprite('idle')
-    }
-    
-    // jumping
-    if (player.velocity.y < 0)
-    {
-        player.switchSprite('jump')
-    }
-    else if (player.velocity.y > 0)
-    {
-        player.switchSprite('fall')
-    }
+        if(player.ai === false)
+        {
+            //player movement
+            if(keys.d.pressed && player.lastKey === 'd' && player.dying === false) 
+            {
+                player.velocity.x = player.runVelocity
+                player.switchSprite('run')
+            } 
+            else if(keys.a.pressed && player.lastKey === 'a' && player.dying === false)
+            {
+                player.velocity.x = player.runVelocity * -1
+                player.switchSprite('run')
+            }
+            else
+            {
+                player.switchSprite('idle')
+            }
+            
+            // jumping
+            if (player.velocity.y < 0 && player.dying === false)
+            {
+                player.switchSprite('jump')
+            }
+            else if (player.velocity.y > 0 && player.dying === false)
+            {
+                player.switchSprite('fall')
+            }
+        }
+        else
+        {
+            if(ai_frame % 10)
+            {
+                player.ai.pathfind();
+                player.ai.animate();
+            }
+        }
 
-    //enemy movement
-    if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') 
-    {
-        enemy.velocity.x = enemy.runVelocity
-        enemy.switchSprite('run')
-    } 
-    else if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft')
-    {
-        enemy.velocity.x = enemy.runVelocity * -1
-        enemy.switchSprite('run')
-    }
-    else
-    {
-        enemy.switchSprite('idle')
-    }
+        if(enemy.ai === false)
+        {
+            //enemy movement
+            if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight' && player.dying === false) 
+            {
+                enemy.velocity.x = enemy.runVelocity
+                enemy.switchSprite('run')
+            } 
+            else if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft' && player.dying === false)
+            {
+                enemy.velocity.x = enemy.runVelocity * -1
+                enemy.switchSprite('run')
+            }
+            else
+            {
+                enemy.switchSprite('idle')
+            }
 
-    // jumping
-    if (enemy.velocity.y < 0)
-    {
-        enemy.switchSprite('jump')
-    }
-    else if (enemy.velocity.y > 0)
-    {
-        enemy.switchSprite('fall')
-    }
+            // jumping
+            if (enemy.velocity.y < 0&& enemy.dying === false)
+            {
+                enemy.switchSprite('jump')
+            }
+            else if (enemy.velocity.y > 0 && enemy.dying === false)
+            {
+                enemy.switchSprite('fall')
+            }
+        }
+        else
+        {
+            if(ai_frame % 10)
+            {
+                enemy.ai.pathfind();
+                enemy.ai.animate();
+            }
+        }
 
     // Ive hit
     if(
@@ -359,13 +373,15 @@ function animate()
         enemy.isAttacking = false;
         enemy.hasHit = false;
     }
+
+    ai_frame++;
 }
 
 animate();
 
 window.addEventListener('keydown', (event) =>
 {
-    if (!player.dead)
+    if (!player.dead && player.ai === false)
     {
         switch (event.key) 
         {
@@ -395,7 +411,7 @@ window.addEventListener('keydown', (event) =>
         }
     }
 
-    if (!enemy.dead)
+    if (!enemy.dead && enemy.ai === false)
     {
         switch (event.key)
         {
