@@ -158,16 +158,21 @@ class Fighter extends Sprite
 
     restore()
     {
-        this.image = this.sprites.idle.image
-        this.framesMax = this.sprites.idle.framesMax
-        this.framesCurrent = 0
-        this.animation = 'idle';
+        if(this.ai !== false)
+            this.ai.reset();
+
         this.dying = false;
         this.dead = false;
+        this.image = this.sprites.idle.image;
+        this.framesMax = this.sprites.idle.framesMax;
+        this.framesCurrent = 0;
+        this.animation = 'idle';
         this.health = this.maxHealth;
         this.jumps = this.maxJumps;
         this.switchSprite('idle');
         this.position = structuredClone(this.startPosition);
+        this.dying = false;
+        this.dead = false;
     }
 
     update() 

@@ -19,6 +19,15 @@
             this.panicTime = 15;
         }
 
+        reset()
+        {
+            this.lastJump = 0;
+            this.lastJumpHealth = 100;
+            this.phase = 'attack';
+            this.phaseChangeTime = 0;
+            this.phases = ['attack', 'evade'];
+        }
+
         pathfind()
         {
             if((this.self.dead === true && this.self.dying === true) || round === 0)

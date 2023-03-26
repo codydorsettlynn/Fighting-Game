@@ -107,4 +107,8 @@ function determineWinner()
         enemy_score++;
         document.querySelector('#enemyScore').innerHTML = enemy_score;
     } 
+
+    setTimeout(() => {
+        startRound();
+    }, 2000);
 }

@@ -381,7 +381,7 @@ animate();
 
 window.addEventListener('keydown', (event) =>
 {
-    if (!player.dead && player.ai === false)
+    if (player.dead === false && player.ai === false)
     {
         switch (event.key) 
         {
@@ -411,7 +411,7 @@ window.addEventListener('keydown', (event) =>
         }
     }
 
-    if (!enemy.dead && enemy.ai === false)
+    if (enemy.dead === false && enemy.ai === false)
     {
         switch (event.key)
         {
