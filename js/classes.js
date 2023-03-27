@@ -169,6 +169,7 @@ class Fighter extends Sprite
         this.animation = 'idle';
         this.health = this.maxHealth;
         this.jumps = this.maxJumps;
+        this.lastPunched = 0;
         this.switchSprite('idle');
         this.position = structuredClone(this.startPosition);
         this.dying = false;
@@ -177,7 +178,11 @@ class Fighter extends Sprite
 
     update() 
    {
-        const ground = (canvas.height * 0.15) <= 100 ? 100 : (canvas.height * 0.15) - 2;
+        const ground = (canvas.height * 0.20) <= 100 ? 100 : (canvas.height * 0.20) - 2;
+        // const ground = 200;
+
+        if(this.dying && this.image === this.sprites.death.image)
+            this.switchSprite('death');
 
         this.draw();
         if (!this.dead) 

@@ -211,12 +211,30 @@ const keys =
 }
 
 var ai_frame = 0;
+var lastDelta = Date.now();
+
+const bg = new Image();
+bg.src = './img/background1.png';
+const mg = new Image();
+mg.src = './img/background2.png';
+const fg = new Image();
+fg.src = './img/background3.png';
+const ground_sprite = new Image();
+ground_sprite.src = './img/ground.png';
+const sun = new Image();
+sun.src = './img/sun.png';
 
 function animate() 
 {
     window.requestAnimationFrame(animate)
+    const deltatime = (Date.now() - lastDelta) / 1000;
+    if(timer > 0)
+    {
+        sunDistance += (((canvas.height / 2) + 400) / round_length) * deltatime;
+        sunTint += (255 / round_length) * deltatime;
+    }
     
-    const ground = (canvas.height * 0.15) <= 100 ? 100 : (canvas.height * 0.15);
+    const ground = (canvas.height * 0.20) <= 100 ? 100 : (canvas.height * 0.20);
 
     // Gradients
     const gradientSky = c.createLinearGradient(0, 0, 0, canvas.height);
@@ -230,11 +248,20 @@ function animate()
     c.fillStyle = gradientSky;
     c.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Ground
-    c.fillStyle = gradientGround;
-    c.fillRect(0, canvas.height - ground, canvas.width, ground);
+    c.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    c.drawImage(sun, canvas.width / 2 - 250, sunDistance);
+    c.drawImage(mg, 0, 0, canvas.width, canvas.height);
+    c.drawImage(fg, 0, 50, canvas.width, canvas.height);
 
-    c.fillStyle = 'rgba(255, 255, 255, 0.2)'
+    // Ground
+    // c.fillStyle = gradientGround;
+    // c.fillRect(0, canvas.height - ground, canvas.width, ground);
+    for (let gi = 0; gi < canvas.width; gi += 200)
+    {
+        c.drawImage(ground_sprite, gi, canvas.height - ground);
+    }
+
+    c.fillStyle = 'rgba(255,'+(255 - sunTint)+', '+(255 - sunTint)+', 0.5)';
     c.fillRect(0, 0, canvas.width, canvas.height)
     player.update()
     enemy.update()
@@ -298,7 +325,7 @@ function animate()
             }
 
             // jumping
-            if (enemy.velocity.y < 0&& enemy.dying === false)
+            if (enemy.velocity.y < 0 && enemy.dying === false)
             {
                 enemy.switchSprite('jump')
             }
@@ -374,6 +401,7 @@ function animate()
         enemy.hasHit = false;
     }
 
+    lastDelta = Date.now();
     ai_frame++;
 }
 
@@ -388,13 +416,11 @@ window.addEventListener('keydown', (event) =>
             case 'd':
                 keys.d.pressed = true
                 player.lastKey = 'd'
-                player.direction = 1
                 break
 
             case 'a':
                 keys.a.pressed = true
                 player.lastKey = 'a'
-                player.direction = -1
                 break
 
             case 'w':

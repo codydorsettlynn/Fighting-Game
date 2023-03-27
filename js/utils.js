@@ -19,6 +19,8 @@ let enemy_score = 0;
 let timer = 0;
 let timerId;
 let paused = false;
+var sunDistance = -500;
+var sunTint = 0;
 
 document.querySelector('#timer').innerHTML = round_length;
 
@@ -48,6 +50,8 @@ function startGame()
 function startRound()
 {
     round++;
+    sunDistance = -500;
+    sunTint = 0;
     document.querySelector('#roundNumber').innerHTML = "ROUND "+round;
     paused = true;
 
@@ -97,18 +101,18 @@ function determineWinner()
     } 
     else if(player.health > enemy.health)
     {
-        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Samurai Wins!</span>' + retryButton;
+        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Sam Wins!</span>' + retryButton;
         player_score++;
         document.querySelector('#playerScore').innerHTML = player_score;
     }
     else if(player.health < enemy.health)
     {
-        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Kenji Wins!</span>' + retryButton;
+        document.querySelector('#displayText').innerHTML = '<span style="font-size: 30px">Jim Wins!</span>' + retryButton;
         enemy_score++;
         document.querySelector('#enemyScore').innerHTML = enemy_score;
     } 
 
     setTimeout(() => {
         startRound();
-    }, 2000);
+    }, 3000);
 }

@@ -30,7 +30,7 @@
 
         pathfind()
         {
-            if((this.self.dead === true && this.self.dying === true) || round === 0)
+            if((this.self.dead === true || this.self.dying === true) || round === 0)
                 return;
 
             var a = this.self.position.x - this.enemy.position.x;
@@ -60,7 +60,6 @@
                     }
                 }
             }
-
             // Punch him
             if(rectangularCollision({ rectangle1: this.self, rectangle2: this.enemy}) && this.attack)
             {
@@ -90,7 +89,7 @@
 
             if(this.phase === 'attack')
             {
-                if(this.self.lastPunched + 200 > Date.now())
+                if((this.self.lastPunched + 200 > Date.now() || (this.self.velocity.y > 0 && this.self.lastPunched > 0)) && this.evade)
                 {
                     if(left > right)
                     {
@@ -101,26 +100,11 @@
                         this.self.velocity.x = Math.round(this.self.runVelocity * 1);
                     }
                 }
-                else if(
-                    this.self.position.x + (this.self.attackBox.width * this.self.direction) < this.enemy.position.x + (this.closeness * this.self.direction)
-                    &&
-                    this.self.position.x + (this.self.attackBox.width * this.self.direction) > this.enemy.position.x - (this.closeness * this.self.direction)
-                )
-                {
-                    if(this.self.position.x > canvas.width - 200)
-                    {
-                        this.self.velocity.x = Math.round(this.self.runVelocity * -1);
-                    }
-                    else if(this.self.position.x < 200)
-                    {
-                        this.self.velocity.x = Math.round(this.self.runVelocity * 1);
-                    }
-                }
-                else if(this.self.position.x + (this.self.attackBox.width * this.self.direction) > this.enemy.position.x)
+                else if(this.self.position.x + (this.self.attackBox.width * this.self.direction) + (this.self.attackBox.offset.x) + (this.self.direction == 1 ? -30 : this.self.width * this.self.scale) + ((Math.random() * 5 - 2.5) * this.self.direction) > this.enemy.position.x)
                 {
                     this.self.velocity.x = Math.round(this.self.runVelocity * -1);
                 }
-                else if(this.self.position.x + (this.self.attackBox.width * this.self.direction) < this.enemy.position.x)
+                else if(this.self.position.x + (this.self.attackBox.width * this.self.direction) + (this.self.attackBox.offset.x) + (this.self.direction == 1 ? -30 : this.self.width * this.self.scale) + ((Math.random() * 5 - 2.5) * this.self.direction) < this.enemy.position.x)
                 {
                     this.self.velocity.x = Math.round(this.self.runVelocity * 1);
                 }
@@ -159,6 +143,16 @@
                     this.self.velocity.y = this.self.jumpVelocity;
                     this.self.jumps -= 1;
                 }
+            }
+
+            // Override horizontal if they are too close to the edges.
+            if(this.self.position.x > canvas.width - 150 && this.self.velocity.y === 0)
+            {
+                this.self.velocity.x = Math.round(this.self.runVelocity * -1);
+            }
+            else if(this.self.position.x < 150 && this.self.velocity.y === 0)
+            {
+                this.self.velocity.x = Math.round(this.self.runVelocity * 1);
             }
 
             // Vertical homing
